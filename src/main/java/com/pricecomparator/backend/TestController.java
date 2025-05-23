@@ -140,4 +140,21 @@ public class TestController {
                 .collect(Collectors.toList());
     }
 
+    @PostMapping("/price-alerts")
+    public List<Product> getPriceAlerts(@RequestBody PriceAlertRequest request) throws IOException {
+        List<Product> allProducts = csvLoaderService.loadAllProductsFromFolder(request.getFolderPath());
+
+        return request.getTargetPrices().entrySet().stream()
+                .flatMap(entry -> {
+                    String productName = entry.getKey();
+                    double targetPrice = entry.getValue();
+
+                    return allProducts.stream()
+                            .filter(p -> p.getProductName().equalsIgnoreCase(productName))
+                            .filter(p -> p.getPrice() <= targetPrice);
+                })
+                .collect(Collectors.toList());
+    }
+
+
 }
