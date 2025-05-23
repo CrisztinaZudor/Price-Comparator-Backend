@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 import java.util.Map;
 import java.util.List;
 
@@ -124,5 +127,17 @@ public class TestController {
         );
     }
 
+    @PostMapping("/optimize-basket")
+    public List<Product> optimizeBasket(@RequestBody BasketRequest request) throws IOException {
+        List<Product> allProducts = csvLoaderService.loadAllProductsFromFolder(request.getFolderPath());
+
+        return request.getProductNames().stream()
+                .map(productName -> allProducts.stream()
+                        .filter(p -> productName.equalsIgnoreCase(p.getProductName()))
+                        .min(Comparator.comparing(Product::getValuePerUnit))
+                        .orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
 }
