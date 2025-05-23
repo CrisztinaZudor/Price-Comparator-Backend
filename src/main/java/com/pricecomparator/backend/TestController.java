@@ -156,5 +156,19 @@ public class TestController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/substitutes")
+    public List<Product> getSubstitutes(
+            @RequestParam String folderPath,
+            @RequestParam String productName
+    ) throws IOException {
+        List<Product> allProducts = csvLoaderService.loadAllProductsFromFolder(folderPath);
+
+        return allProducts.stream()
+                .filter(p -> productName.equalsIgnoreCase(p.getProductName()))
+                .sorted(Comparator.comparing(Product::getValuePerUnit)) // Best value first
+                .collect(Collectors.toList());
+    }
+
+
 
 }
