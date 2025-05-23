@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class CsvLoaderService {
                 List<Discount> discounts = new CsvToBeanBuilder<Discount>(new FileReader(file.getAbsolutePath()))
                         .withType(Discount.class)
                         .withIgnoreLeadingWhiteSpace(true)
-                        .withSeparator(';')  // <- Important!
+                        .withSeparator(';')
                         .build()
                         .parse();
 

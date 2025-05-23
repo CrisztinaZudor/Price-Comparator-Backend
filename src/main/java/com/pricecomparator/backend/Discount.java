@@ -1,7 +1,10 @@
 package com.pricecomparator.backend;
 
 import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvCustomBindByName;
 import lombok.Data;
+
+import java.time.LocalDate;
 
 @Data
 public class Discount {
@@ -24,11 +27,11 @@ public class Discount {
     @CsvBindByName(column = "product_category")
     private String productCategory;
 
-    @CsvBindByName(column = "from_date")
-    private String fromDate;
+    @CsvCustomBindByName(column = "from_date", converter = LocalDateConverter.class)
+    private LocalDate fromDate;
 
-    @CsvBindByName(column = "to_date")
-    private String toDate;
+    @CsvCustomBindByName(column = "to_date", converter = LocalDateConverter.class)
+    private LocalDate toDate;
 
     @CsvBindByName(column = "percentage_of_discount")
     private int percentageOfDiscount;

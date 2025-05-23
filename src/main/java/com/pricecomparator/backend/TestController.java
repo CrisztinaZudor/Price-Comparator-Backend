@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -46,11 +47,28 @@ public class TestController {
     public List<Discount> getBestDiscounts(@RequestParam String folderPath) throws IOException {
         List<Discount> allDiscounts = csvLoaderService.loadAllDiscountsFromFolder(folderPath);
 
-        // Sort by percentage descending and return top 10 (or more if needed)
         return allDiscounts.stream()
                 .sorted(Comparator.comparingInt(Discount::getPercentageOfDiscount).reversed())
                 .limit(10)
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/new-discounts")
+    public List<Discount> getNewDiscounts(@RequestParam String folderPath) throws IOException {
+        List<Discount> allDiscounts = csvLoaderService.loadAllDiscountsFromFolder(folderPath);
+
+        LocalDate now = LocalDate.now();
+        LocalDate yesterday = now.minusDays(1);
+
+        // Return discounts added within the last 24 hours
+        return allDiscounts.stream()
+                .filter(d -> {
+                    LocalDate fromDate = d.getFromDate();
+                    return fromDate != null &&
+                            !fromDate.isBefore(yesterday) &&
+                            !fromDate.isAfter(now);
+                })
+                .sorted(Comparator.comparing(Discount::getFromDate).reversed())
+                .collect(Collectors.toList());
+    }
 }
