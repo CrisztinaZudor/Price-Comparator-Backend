@@ -45,4 +45,32 @@ public class CsvLoaderService {
 
         return allProducts;
     }
+
+    public List<Discount> loadAllDiscountsFromFolder(String folderPath) throws IOException {
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".csv") && name.contains("discount"));
+
+        List<Discount> allDiscounts = new ArrayList<>();
+        if (files != null) {
+            for (File file : files) {
+                String filename = file.getName().replace(".csv", "");
+                String store = filename.split("_")[0];
+
+                List<Discount> discounts = new CsvToBeanBuilder<Discount>(new FileReader(file.getAbsolutePath()))
+                        .withType(Discount.class)
+                        .withIgnoreLeadingWhiteSpace(true)
+                        .withSeparator(';')  // <- Important!
+                        .build()
+                        .parse();
+
+                for (Discount d : discounts) {
+                    d.setStoreName(store);
+                }
+
+                allDiscounts.addAll(discounts);
+            }
+        }
+        return allDiscounts;
+    }
+
 }

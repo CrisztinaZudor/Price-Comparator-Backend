@@ -41,4 +41,16 @@ public class TestController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
+
+    @GetMapping("/best-discounts")
+    public List<Discount> getBestDiscounts(@RequestParam String folderPath) throws IOException {
+        List<Discount> allDiscounts = csvLoaderService.loadAllDiscountsFromFolder(folderPath);
+
+        // Sort by percentage descending and return top 10 (or more if needed)
+        return allDiscounts.stream()
+                .sorted(Comparator.comparingInt(Discount::getPercentageOfDiscount).reversed())
+                .limit(10)
+                .collect(Collectors.toList());
+    }
+
 }
