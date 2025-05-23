@@ -3,8 +3,10 @@ package com.pricecomparator.backend;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -14,7 +16,7 @@ public class CsvLoaderService {
         List<Product> products = new CsvToBeanBuilder<Product>(new FileReader(filePath))
                 .withType(Product.class)
                 .withIgnoreLeadingWhiteSpace(true)
-                .withSeparator(';') // VERY IMPORTANT: semicolon
+                .withSeparator(';')
                 .build()
                 .parse();
         for (Product p : products) {
@@ -22,5 +24,25 @@ public class CsvLoaderService {
             p.setDate(date);
         }
         return products;
+    }
+
+    public List<Product> loadAllProductsFromFolder(String folderPath) throws IOException {
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".csv") && !name.contains("discount"));
+
+        List<Product> allProducts = new ArrayList<>();
+        if (files != null) {
+            for (File file : files) {
+                String filename = file.getName().replace(".csv", "");
+                String[] parts = filename.split("_");
+                String store = parts[0];
+                String date = parts[1];
+
+                List<Product> products = loadProducts(file.getAbsolutePath(), store, date);
+                allProducts.addAll(products);
+            }
+        }
+
+        return allProducts;
     }
 }
