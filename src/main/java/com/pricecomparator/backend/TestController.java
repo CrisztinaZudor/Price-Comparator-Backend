@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import java.util.Map;
+import java.util.List;
+
+
 @RestController
 public class TestController {
 
@@ -31,7 +35,6 @@ public class TestController {
     public List<Product> getBestPriceProducts(@RequestParam String folderPath) throws IOException {
         List<Product> all = csvLoaderService.loadAllProductsFromFolder(folderPath);
 
-        // Group by productId and find lowest price per unit
         return all.stream()
                 .collect(Collectors.groupingBy(Product::getProductId))
                 .values()
@@ -60,7 +63,6 @@ public class TestController {
         LocalDate now = LocalDate.now();
         LocalDate yesterday = now.minusDays(1);
 
-        // Return discounts added within the last 24 hours
         return allDiscounts.stream()
                 .filter(d -> {
                     LocalDate fromDate = d.getFromDate();
@@ -71,4 +73,56 @@ public class TestController {
                 .sorted(Comparator.comparing(Discount::getFromDate).reversed())
                 .collect(Collectors.toList());
     }
+
+    @GetMapping("/price-history")
+    public List<Product> getPriceHistory(
+            @RequestParam String folderPath,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String productCategory,
+            @RequestParam(required = false) String storeName,
+            @RequestParam(required = false) String productName
+    ) throws IOException {
+        List<Product> allProducts = csvLoaderService.loadAllProductsFromFolder(folderPath);
+
+        return allProducts.stream()
+                .filter(p -> brand == null || p.getBrand().equalsIgnoreCase(brand))
+                .filter(p -> productCategory == null || p.getProductCategory().equalsIgnoreCase(productCategory))
+                .filter(p -> storeName == null || p.getStoreName().equalsIgnoreCase(storeName))
+                .filter(p -> productName == null || p.getProductName().equalsIgnoreCase(productName))
+                .sorted(Comparator.comparing(Product::getProductId).thenComparing(Product::getDate))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/price-history-chart")
+    public Map<String, Object> getPriceHistoryChart(
+            @RequestParam String folderPath,
+            @RequestParam String productId
+    ) throws IOException {
+        List<Product> allProducts = csvLoaderService.loadAllProductsFromFolder(folderPath);
+
+        List<Product> filtered = allProducts.stream()
+                .filter(p -> productId.equals(p.getProductId()))
+                .sorted(Comparator.comparing(Product::getDate))
+                .collect(Collectors.toList());
+
+        List<String> labels = filtered.stream()
+                .map(p -> p.getDate() + " (" + p.getStoreName() + ")")
+                .collect(Collectors.toList());
+
+        List<Double> prices = filtered.stream()
+                .map(Product::getPrice)
+                .collect(Collectors.toList());
+
+        return Map.of(
+                "labels", labels,
+                "datasets", List.of(
+                        Map.of(
+                                "label", "Price",
+                                "data", prices
+                        )
+                )
+        );
+    }
+
+
 }
