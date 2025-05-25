@@ -26,7 +26,7 @@ This backend project allows users to compare product prices across major Romania
 
 ---
 
-## ⚙Build & Run Instructions
+## Build & Run Instructions
 
 ### 1. Clone the repository
 
