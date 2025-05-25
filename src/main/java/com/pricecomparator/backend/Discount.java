@@ -36,6 +36,15 @@ public class Discount {
     @CsvBindByName(column = "percentage_of_discount")
     private int percentageOfDiscount;
 
-    // Optional extra field to help track which store it came from
+    // Optional field to track store
     private String storeName;
+
+    public boolean isValid() {
+        return productId != null && !productId.isBlank()
+                && productName != null && !productName.isBlank()
+                && packageQuantity >= 0
+                && percentageOfDiscount >= 0 && percentageOfDiscount <= 100
+                && fromDate != null && toDate != null
+                && !fromDate.isAfter(toDate);
+    }
 }

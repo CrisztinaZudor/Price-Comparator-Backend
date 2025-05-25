@@ -4,9 +4,10 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,12 +15,18 @@ import java.util.List;
 public class CsvLoaderService {
 
     public List<Product> loadProducts(String filePath, String storeName, String date) throws IOException {
-        List<Product> products = new CsvToBeanBuilder<Product>(new FileReader(filePath))
+        File file = new File(filePath);
+        if (!file.exists() || !file.canRead()) {
+            throw new FileNotFoundException("File not found or not readable: " + filePath);
+        }
+
+        List<Product> products = new CsvToBeanBuilder<Product>(new FileReader(file))
                 .withType(Product.class)
                 .withIgnoreLeadingWhiteSpace(true)
                 .withSeparator(';')
                 .build()
                 .parse();
+
         for (Product p : products) {
             p.setStoreName(storeName);
             p.setDate(date);
@@ -29,49 +36,62 @@ public class CsvLoaderService {
 
     public List<Product> loadAllProductsFromFolder(String folderPath) throws IOException {
         File folder = new File(folderPath);
-        File[] files = folder.listFiles((dir, name) -> name.endsWith(".csv") && !name.contains("discount"));
-
-        List<Product> allProducts = new ArrayList<>();
-        if (files != null) {
-            for (File file : files) {
-                String filename = file.getName().replace(".csv", "");
-                String[] parts = filename.split("_");
-                String store = parts[0];
-                String date = parts[1];
-
-                List<Product> products = loadProducts(file.getAbsolutePath(), store, date);
-                allProducts.addAll(products);
-            }
+        if (!folder.exists() || !folder.isDirectory()) {
+            throw new IOException("Invalid folder path: " + folderPath);
         }
 
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".csv") && !name.contains("discount"));
+        if (files == null || files.length == 0) {
+            throw new IOException("No product CSV files found in folder: " + folderPath);
+        }
+
+        List<Product> allProducts = new ArrayList<>();
+        for (File file : files) {
+            String filename = file.getName().replace(".csv", "");
+            String[] parts = filename.split("_");
+            if (parts.length < 2) continue;
+
+            String store = parts[0];
+            String date = parts[1];
+
+            allProducts.addAll(loadProducts(file.getAbsolutePath(), store, date));
+        }
         return allProducts;
     }
 
     public List<Discount> loadAllDiscountsFromFolder(String folderPath) throws IOException {
         File folder = new File(folderPath);
+        if (!folder.exists() || !folder.isDirectory()) {
+            throw new IOException("Invalid folder path: " + folderPath);
+        }
+
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".csv") && name.contains("discount"));
+        if (files == null || files.length == 0) {
+            throw new IOException("No discount CSV files found in folder: " + folderPath);
+        }
 
         List<Discount> allDiscounts = new ArrayList<>();
-        if (files != null) {
-            for (File file : files) {
-                String filename = file.getName().replace(".csv", "");
-                String store = filename.split("_")[0];
+        for (File file : files) {
+            String filename = file.getName().replace(".csv", "");
+            String[] parts = filename.split("_");
+            if (parts.length < 1) continue;
 
-                List<Discount> discounts = new CsvToBeanBuilder<Discount>(new FileReader(file.getAbsolutePath()))
-                        .withType(Discount.class)
-                        .withIgnoreLeadingWhiteSpace(true)
-                        .withSeparator(';')
-                        .build()
-                        .parse();
+            String store = parts[0];
 
-                for (Discount d : discounts) {
-                    d.setStoreName(store);
-                }
+            List<Discount> discounts = new CsvToBeanBuilder<Discount>(new FileReader(file))
+                    .withType(Discount.class)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .withSeparator(';')
+                    .build()
+                    .parse();
 
-                allDiscounts.addAll(discounts);
+            for (Discount d : discounts) {
+                d.setStoreName(store);
             }
+
+            allDiscounts.addAll(discounts);
         }
+
         return allDiscounts;
     }
-
 }

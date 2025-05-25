@@ -1,3 +1,4 @@
+
 package com.pricecomparator.backend;
 
 import com.opencsv.bean.CsvBindByName;
@@ -6,6 +7,7 @@ import lombok.Data;
 
 @Data
 public class Product {
+
     @CsvBindByName(column = "product_id")
     private String productId;
 
@@ -37,5 +39,23 @@ public class Product {
     @JsonProperty("valuePerUnit")
     public double getValuePerUnit() {
         return packageQuantity > 0 ? price / packageQuantity : Double.MAX_VALUE;
+    }
+
+    public void validate() {
+        if (productId == null || productId.isBlank()) {
+            throw new IllegalArgumentException("Product ID is missing.");
+        }
+        if (productName == null || productName.isBlank()) {
+            throw new IllegalArgumentException("Product name is missing.");
+        }
+        if (packageQuantity <= 0) {
+            throw new IllegalArgumentException("Invalid package quantity: " + packageQuantity);
+        }
+        if (price < 0) {
+            throw new IllegalArgumentException("Price cannot be negative: " + price);
+        }
+        if (currency == null || currency.isBlank()) {
+            throw new IllegalArgumentException("Currency is missing.");
+        }
     }
 }

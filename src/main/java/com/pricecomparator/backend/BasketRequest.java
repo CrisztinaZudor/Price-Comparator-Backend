@@ -22,4 +22,14 @@ public class BasketRequest {
     public void setProductNames(List<String> productNames) {
         this.productNames = productNames;
     }
+
+    /**
+     * Validation method to ensure required fields are populated.
+     */
+    public boolean isValid() {
+        return folderPath != null && !folderPath.isBlank()
+                && productNames != null
+                && !productNames.isEmpty()
+                && productNames.stream().allMatch(name -> name != null && !name.isBlank());
+    }
 }

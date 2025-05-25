@@ -4,6 +4,7 @@ import com.opencsv.bean.AbstractBeanField;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class LocalDateConverter extends AbstractBeanField<LocalDate, String> {
 
@@ -11,6 +12,14 @@ public class LocalDateConverter extends AbstractBeanField<LocalDate, String> {
 
     @Override
     protected LocalDate convert(String value) {
-        return LocalDate.parse(value, FORMATTER);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(value.trim(), FORMATTER);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid date format: '" + value + "'. Expected format: yyyy-MM-dd");
+        }
     }
 }
